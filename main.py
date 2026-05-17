@@ -32,7 +32,7 @@ async def on_ready():
 
 
 # =========================
-# PING COMMAND
+# PING
 # =========================
 @bot.command()
 async def ping(ctx):
@@ -40,7 +40,7 @@ async def ping(ctx):
 
 
 # =========================
-# PLAY COMMAND DEBUG
+# PLAY
 # =========================
 @bot.command()
 async def play(ctx, *, search):
@@ -49,29 +49,49 @@ async def play(ctx, *, search):
 
     await ctx.send(f"🔍 Command Working: {search}")
 
-    # CHECK VC
+    # CHECK VOICE
     if not ctx.author.voice:
-        return await ctx.send("❌ Join VC dulu.")
+        return await ctx.send("❌ Join voice channel dulu.")
 
     channel = ctx.author.voice.channel
 
-    # CONNECT
-    if ctx.voice_client is None:
-        await channel.connect()
+    # =========================
+    # CONNECT VC
+    # =========================
+    try:
 
-    elif ctx.voice_client.channel != channel:
-        await ctx.voice_client.move_to(channel)
+        if ctx.voice_client is None:
 
-    await ctx.send("✅ Connected to VC")
+            await ctx.send("🔌 Connecting VC...")
+
+            await asyncio.wait_for(
+                channel.connect(),
+                timeout=15
+            )
+
+        elif ctx.voice_client.channel != channel:
+
+            await ctx.voice_client.move_to(channel)
+
+        await ctx.send("✅ Connected to VC")
+
+    except Exception as e:
+
+        print(e)
+
+        return await ctx.send(
+            f"❌ VC ERROR:\n```{e}```"
+        )
 
     # =========================
-    # YTDLP
+    # YTDLP CONFIG
     # =========================
     ytdl_format_options = {
         "format": "bestaudio/best",
         "noplaylist": True,
         "quiet": False,
         "default_search": "ytsearch",
+
         "extractor_args": {
             "youtube": {
                 "player_client": ["android", "web"]
@@ -81,15 +101,21 @@ async def play(ctx, *, search):
 
     ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 
+    # =========================
+    # SEARCH MUSIC
+    # =========================
     try:
-
-        loop = asyncio.get_event_loop()
 
         await ctx.send("🔎 Searching YouTube...")
 
+        loop = asyncio.get_event_loop()
+
         data = await loop.run_in_executor(
             None,
-            lambda: ytdl.extract_info(search, download=False)
+            lambda: ytdl.extract_info(
+                search,
+                download=False
+            )
         )
 
         if "entries" in data:
@@ -100,6 +126,9 @@ async def play(ctx, *, search):
 
         await ctx.send(f"🎵 Found: {title}")
 
+        # =========================
+        # PLAY AUDIO
+        # =========================
         source = await discord.FFmpegOpusAudio.from_probe(
             url,
             method="fallback"
@@ -109,20 +138,26 @@ async def play(ctx, *, search):
 
         ctx.voice_client.play(
             source,
-            after=lambda e: print(f"PLAYER ERROR: {e}") if e else None
+            after=lambda e: print(
+                f"PLAYER ERROR: {e}"
+            ) if e else None
         )
 
-        await ctx.send(f"▶️ Playing: **{title}**")
+        await ctx.send(
+            f"▶️ Playing: **{title}**"
+        )
 
     except Exception as e:
 
         print(e)
 
-        await ctx.send(f"❌ ERROR:\n```{e}```")
+        await ctx.send(
+            f"❌ PLAY ERROR:\n```{e}```"
+        )
 
 
 # =========================
-# STOP COMMAND
+# STOP
 # =========================
 @bot.command()
 async def stop(ctx):
