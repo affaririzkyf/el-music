@@ -26,3 +26,7 @@ urllib3==2.7.0
 yarl==1.23.0
 youtube-search-python==1.6.6
 yt-dlp==2026.3.17
+yt-dlp
+PyNaCl
+discord.py
+python-dotenv
