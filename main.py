@@ -15,74 +15,16 @@ TOKEN = os.getenv("TOKEN")
 intents = discord.Intents.default()
 intents.message_content = True
 
-# PREFIX ?
-bot = commands.Bot(command_prefix="?", intents=intents)
+# =========================
+# BOT
+# =========================
+bot = commands.Bot(
+    command_prefix="?",
+    intents=intents
+)
 
 # =========================
-# YTDLP CONFIG
-# =========================
-ytdl_format_options = {
-    "format": "bestaudio[ext=m4a]/bestaudio/best",
-    "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
-    "restrictfilenames": True,
-    "noplaylist": True,
-    "nocheckcertificate": True,
-    "ignoreerrors": False,
-    "quiet": True,
-    "no_warnings": True,
-    "default_search": "ytsearch",
-    "source_address": "0.0.0.0",
-
-    # FIX YOUTUBE BLOCK
-    "extractor_args": {
-        "youtube": {
-            "player_client": ["android", "web"]
-        }
-    },
-}
-
-ffmpeg_options = {
-    "options": "-vn"
-}
-
-ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
-
-
-# =========================
-# YTDL SOURCE
-# =========================
-class YTDLSource(discord.PCMVolumeTransformer):
-
-    def __init__(self, source, *, data, volume=0.5):
-        super().__init__(source, volume)
-
-        self.data = data
-        self.title = data.get("title")
-        self.url = data.get("url")
-
-    @classmethod
-    async def from_url(cls, url, *, loop=None, stream=True):
-
-        loop = loop or asyncio.get_event_loop()
-
-        data = await loop.run_in_executor(
-            None,
-            lambda: ytdl.extract_info(url, download=not stream)
-        )
-
-        if "entries" in data:
-            data = data["entries"][0]
-
-        filename = data["url"] if stream else ytdl.prepare_filename(data)
-
-        return cls(
-            discord.FFmpegPCMAudio(filename, **ffmpeg_options),
-            data=data
-        )
-
-
-# =========================
-# READY EVENT
+# READY
 # =========================
 @bot.event
 async def on_ready():
@@ -98,43 +40,85 @@ async def ping(ctx):
 
 
 # =========================
-# PLAY COMMAND
+# PLAY COMMAND DEBUG
 # =========================
 @bot.command()
-async def play(ctx, *, query):
+async def play(ctx, *, search):
 
-    if ctx.author.voice is None:
-        return await ctx.send("❌ Masuk voice channel dulu.")
+    print("PLAY COMMAND CALLED")
 
-    voice_channel = ctx.author.voice.channel
+    await ctx.send(f"🔍 Command Working: {search}")
 
-    # CONNECT BOT
+    # CHECK VC
+    if not ctx.author.voice:
+        return await ctx.send("❌ Join VC dulu.")
+
+    channel = ctx.author.voice.channel
+
+    # CONNECT
     if ctx.voice_client is None:
-        await voice_channel.connect()
+        await channel.connect()
 
-    elif ctx.voice_client.channel != voice_channel:
-        await ctx.voice_client.move_to(voice_channel)
+    elif ctx.voice_client.channel != channel:
+        await ctx.voice_client.move_to(channel)
 
-    async with ctx.typing():
+    await ctx.send("✅ Connected to VC")
 
-        try:
-            player = await YTDLSource.from_url(
-                query,
-                loop=bot.loop,
-                stream=True
-            )
+    # =========================
+    # YTDLP
+    # =========================
+    ytdl_format_options = {
+        "format": "bestaudio/best",
+        "noplaylist": True,
+        "quiet": False,
+        "default_search": "ytsearch",
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"]
+            }
+        }
+    }
 
-            ctx.voice_client.stop()
+    ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 
-            ctx.voice_client.play(
-                player,
-                after=lambda e: print(f"Player Error: {e}") if e else None
-            )
+    try:
 
-            await ctx.send(f"🎵 Now Playing: **{player.title}**")
+        loop = asyncio.get_event_loop()
 
-        except Exception as e:
-            await ctx.send(f"❌ Error:\n```{e}```")
+        await ctx.send("🔎 Searching YouTube...")
+
+        data = await loop.run_in_executor(
+            None,
+            lambda: ytdl.extract_info(search, download=False)
+        )
+
+        if "entries" in data:
+            data = data["entries"][0]
+
+        url = data["url"]
+        title = data["title"]
+
+        await ctx.send(f"🎵 Found: {title}")
+
+        source = await discord.FFmpegOpusAudio.from_probe(
+            url,
+            method="fallback"
+        )
+
+        ctx.voice_client.stop()
+
+        ctx.voice_client.play(
+            source,
+            after=lambda e: print(f"PLAYER ERROR: {e}") if e else None
+        )
+
+        await ctx.send(f"▶️ Playing: **{title}**")
+
+    except Exception as e:
+
+        print(e)
+
+        await ctx.send(f"❌ ERROR:\n```{e}```")
 
 
 # =========================
@@ -145,7 +129,7 @@ async def stop(ctx):
 
     if ctx.voice_client:
         await ctx.voice_client.disconnect()
-        await ctx.send("👋 Disconnected.")
+        await ctx.send("👋 Disconnected")
 
 
 # =========================
