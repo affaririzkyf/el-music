@@ -1,0 +1,3 @@
+PREFIX = "?"
+EMBED_COLOR = 0x2F3136
+BOT_NAME = "El Music"
