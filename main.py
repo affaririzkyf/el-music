@@ -67,7 +67,7 @@ async def play(ctx, *, search):
         if ctx.voice_client is None:
 
             await ctx.send(
-                "🔌 Connecting to VC..."
+                "🔌 Connecting VC..."
             )
 
             await asyncio.wait_for(
@@ -98,29 +98,32 @@ async def play(ctx, *, search):
     # =========================
     ytdl_format_options = {
 
+        # AUDIO
         "format": "bestaudio/best",
 
-        "quiet": False,
+        # QUIET
+        "quiet": True,
 
-        "noplaylist": True,
-
+        # SEARCH
         "default_search": "ytsearch",
 
+        # NO PLAYLIST
+        "noplaylist": True,
+
+        # COOKIES
         "cookiefile": "cookies.txt",
 
+        # SKIP DOWNLOAD
+        "skip_download": True,
+
+        # FIX SSL
         "nocheckcertificate": True,
 
+        # YOUTUBE FIX
         "extractor_args": {
             "youtube": {
                 "player_client": [
-                    "android",
-                    "ios",
-                    "web"
-                ],
-
-                "player_skip": [
-                    "webpage",
-                    "configs"
+                    "android"
                 ]
             }
         }
@@ -141,20 +144,24 @@ async def play(ctx, *, search):
 
         loop = asyncio.get_event_loop()
 
+        # FORCE SEARCH1
         data = await loop.run_in_executor(
             None,
             lambda: ytdl.extract_info(
-                search,
+                f"ytsearch1:{search}",
                 download=False
             )
         )
 
-        # PLAYLIST FIX
+        # SEARCH RESULT
         if "entries" in data:
+
             data = data["entries"][0]
 
+        # AUDIO URL
         url = data["url"]
 
+        # TITLE
         title = data["title"]
 
         await ctx.send(
