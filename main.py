@@ -9,9 +9,13 @@ load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
 
+# =========================
+# INTENTS
+# =========================
 intents = discord.Intents.default()
 intents.message_content = True
 
+# PREFIX ?
 bot = commands.Bot(command_prefix="?", intents=intents)
 
 # =========================
@@ -24,12 +28,12 @@ ytdl_format_options = {
     "noplaylist": True,
     "nocheckcertificate": True,
     "ignoreerrors": False,
-    "logtostderr": False,
     "quiet": True,
     "no_warnings": True,
     "default_search": "ytsearch",
     "source_address": "0.0.0.0",
 
+    # FIX YOUTUBE BLOCK
     "extractor_args": {
         "youtube": {
             "player_client": ["android", "web"]
@@ -44,6 +48,9 @@ ffmpeg_options = {
 ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 
 
+# =========================
+# YTDL SOURCE
+# =========================
 class YTDLSource(discord.PCMVolumeTransformer):
 
     def __init__(self, source, *, data, volume=0.5):
@@ -75,11 +82,19 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
 
 # =========================
-# EVENTS
+# READY EVENT
 # =========================
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user}")
+    print(f"✅ Logged in as {bot.user}")
+
+
+# =========================
+# PING COMMAND
+# =========================
+@bot.command()
+async def ping(ctx):
+    await ctx.send("🏓 Pong!")
 
 
 # =========================
@@ -89,10 +104,11 @@ async def on_ready():
 async def play(ctx, *, query):
 
     if ctx.author.voice is None:
-        return await ctx.send("Masuk voice channel dulu.")
+        return await ctx.send("❌ Masuk voice channel dulu.")
 
     voice_channel = ctx.author.voice.channel
 
+    # CONNECT BOT
     if ctx.voice_client is None:
         await voice_channel.connect()
 
@@ -112,10 +128,10 @@ async def play(ctx, *, query):
 
             ctx.voice_client.play(
                 player,
-                after=lambda e: print(f"Player error: {e}") if e else None
+                after=lambda e: print(f"Player Error: {e}") if e else None
             )
 
-            await ctx.send(f"🎵 Now playing: **{player.title}**")
+            await ctx.send(f"🎵 Now Playing: **{player.title}**")
 
         except Exception as e:
             await ctx.send(f"❌ Error:\n```{e}```")
