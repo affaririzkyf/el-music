@@ -47,11 +47,15 @@ async def play(ctx, *, search):
 
     print("PLAY COMMAND CALLED")
 
-    await ctx.send(f"🔍 Command Working: {search}")
+    await ctx.send(f"🔍 Searching: `{search}`")
 
-    # CHECK VOICE
+    # =========================
+    # CHECK VC
+    # =========================
     if not ctx.author.voice:
-        return await ctx.send("❌ Join voice channel dulu.")
+        return await ctx.send(
+            "❌ Join voice channel dulu."
+        )
 
     channel = ctx.author.voice.channel
 
@@ -62,7 +66,9 @@ async def play(ctx, *, search):
 
         if ctx.voice_client is None:
 
-            await ctx.send("🔌 Connecting VC...")
+            await ctx.send(
+                "🔌 Connecting to VC..."
+            )
 
             await asyncio.wait_for(
                 channel.connect(),
@@ -71,9 +77,13 @@ async def play(ctx, *, search):
 
         elif ctx.voice_client.channel != channel:
 
-            await ctx.voice_client.move_to(channel)
+            await ctx.voice_client.move_to(
+                channel
+            )
 
-        await ctx.send("✅ Connected to VC")
+        await ctx.send(
+            "✅ Connected to VC"
+        )
 
     except Exception as e:
 
@@ -87,26 +97,45 @@ async def play(ctx, *, search):
     # YTDLP CONFIG
     # =========================
     ytdl_format_options = {
+
         "format": "bestaudio/best",
+
         "noplaylist": True,
+
         "quiet": False,
+
         "default_search": "ytsearch",
 
+        # =========================
+        # YOUTUBE COOKIES
+        # =========================
+        "cookiefile": "cookies.txt",
+
+        # =========================
+        # FIX YOUTUBE BLOCK
+        # =========================
         "extractor_args": {
             "youtube": {
-                "player_client": ["android", "web"]
+                "player_client": [
+                    "android",
+                    "web"
+                ]
             }
         }
     }
 
-    ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
+    ytdl = yt_dlp.YoutubeDL(
+        ytdl_format_options
+    )
 
     # =========================
     # SEARCH MUSIC
     # =========================
     try:
 
-        await ctx.send("🔎 Searching YouTube...")
+        await ctx.send(
+            "🔎 Searching YouTube..."
+        )
 
         loop = asyncio.get_event_loop()
 
@@ -118,13 +147,17 @@ async def play(ctx, *, search):
             )
         )
 
+        # PLAYLIST FIX
         if "entries" in data:
             data = data["entries"][0]
 
         url = data["url"]
+
         title = data["title"]
 
-        await ctx.send(f"🎵 Found: {title}")
+        await ctx.send(
+            f"🎵 Found: **{title}**"
+        )
 
         # =========================
         # PLAY AUDIO
@@ -144,7 +177,7 @@ async def play(ctx, *, search):
         )
 
         await ctx.send(
-            f"▶️ Playing: **{title}**"
+            f"▶️ Now Playing:\n**{title}**"
         )
 
     except Exception as e:
@@ -163,15 +196,21 @@ async def play(ctx, *, search):
 async def stop(ctx):
 
     if ctx.voice_client:
+
         await ctx.voice_client.disconnect()
-        await ctx.send("👋 Disconnected")
+
+        await ctx.send(
+            "👋 Disconnected"
+        )
 
 
 # =========================
 # MAIN
 # =========================
 async def main():
+
     async with bot:
+
         await bot.start(TOKEN)
 
 
