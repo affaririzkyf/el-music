@@ -100,25 +100,27 @@ async def play(ctx, *, search):
 
         "format": "bestaudio/best",
 
-        "noplaylist": True,
-
         "quiet": False,
+
+        "noplaylist": True,
 
         "default_search": "ytsearch",
 
-        # =========================
-        # YOUTUBE COOKIES
-        # =========================
         "cookiefile": "cookies.txt",
 
-        # =========================
-        # FIX YOUTUBE BLOCK
-        # =========================
+        "nocheckcertificate": True,
+
         "extractor_args": {
             "youtube": {
                 "player_client": [
                     "android",
+                    "ios",
                     "web"
+                ],
+
+                "player_skip": [
+                    "webpage",
+                    "configs"
                 ]
             }
         }
