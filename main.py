@@ -3,9 +3,9 @@ from discord.ext import commands
 import yt_dlp
 import asyncio
 import os
-import dotenv
+from dotenv import load_dotenv
 
-dotenv.load_dotenv()
+load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
 
@@ -30,15 +30,11 @@ ytdl_format_options = {
     "default_search": "ytsearch",
     "source_address": "0.0.0.0",
 
-    # FIX YOUTUBE BOT DETECTION
     "extractor_args": {
         "youtube": {
             "player_client": ["android", "web"]
         }
     },
-
-    # OPTIONAL COOKIES
-    # "cookiefile": "cookies.txt",
 }
 
 ffmpeg_options = {
@@ -125,23 +121,23 @@ async def play(ctx, *, query):
             await ctx.send(f"❌ Error:\n```{e}```")
 
 
-    # =========================
-    # STOP COMMAND
-    # =========================
-    @bot.command()
-    async def stop(ctx):
+# =========================
+# STOP COMMAND
+# =========================
+@bot.command()
+async def stop(ctx):
 
-        if ctx.voice_client:
-            await ctx.voice_client.disconnect()
-            await ctx.send("👋 Disconnected.")
-
-
-    # =========================
-    # MAIN
-    # =========================
-    async def main():
-        async with bot:
-            await bot.start(TOKEN)
+    if ctx.voice_client:
+        await ctx.voice_client.disconnect()
+        await ctx.send("👋 Disconnected.")
 
 
-    asyncio.run(main())
+# =========================
+# MAIN
+# =========================
+async def main():
+    async with bot:
+        await bot.start(TOKEN)
+
+
+asyncio.run(main())
